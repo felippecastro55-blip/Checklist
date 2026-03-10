@@ -1,7 +1,10 @@
+//Campos para preenchimento das tarefas
 var data = $('#data');
 var hora = $('#hora');
 var tarefa = $('#tarefa');
+var idtarefaEditada = $('#idTarefaEditada')
 
+//Buttons
 var buttonSalvar = `<button class="btn btn-primary" id="salvar">Salvar</button>`;
 var buttonCancelar = `<button class="btn btn-primary" id="cancelarEdit">Cancelar</button>`;
 var buttonEditar = `<a href="#" class="editar">
@@ -13,66 +16,75 @@ var buttonEditar = `<a href="#" class="editar">
                                 d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
                         </svg>
                         </a>`;
-
 var statusTarefa = `<div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox">
+                            <input class="form-check-input status" type="checkbox">
                         </div>`;
 
-var tarefas = [];
-var quantidadeTarefas = tarefas.length;
-var id = 0;
-/* $("#salvar").on('click', function () {
-    data = $('#data').val();
-    hora = $('#hora').val();
-    tarefa = $('#tarefa').val();
-    let status = `<div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox">
-                        </div>`;    
 
+//Upload dos dados do localStorage
+for (let i = 0; i < localStorage.length; i++) {
+    let tarefaStorage = JSON.parse(localStorage.getItem(localStorage.key(i)));
+    $('tbody').append(`<tr>
+                                <td name="id" hidden></td>
+                                <td name="data"></td>
+                                <td name="hora"></td>
+                                <td name="tarefa"></td>
+                            <td></td>
+                            <td>${buttonEditar}</td>
+                            </tr>`);
+    Object.keys(tarefaStorage).forEach(function (el, j) {
 
-    $('tbody tr').append(`<tr>                    
-                            <td>${data}</td>
-                            <td>${hora}</td>
-                            <td>${tarefa}</td>
-                            <td>${status}</td>`);
+        if (el !== "status") {
 
-    localStorage.setItem(`data_${idLocalStorage}`, data);                        
-    localStorage.setItem('hora', hora);
-    localStorage.setItem('tarefa', tarefa);
-    localStorage.setItem('status', status);
-}); */
+            $('.listaTarefas tbody tr').last().find('td').eq(j).text(tarefaStorage[el])
+
+            console.log('preencheu');
+        } else {
+            $('.listaTarefas tbody tr').last().find('td').eq(j).html(tarefaStorage[el])
+            console.log('chegou no campo status');
+        };
+    });
+};
+
+var objTarefas = {};
+var id = Number($('tbody tr').last().find('[name="id"]').text()) + 1 || 0;
+console.log(id)
 //button salvar
 $("#salvar").on('click', function () {
-    if($('#idTarefaEditada').text()){
+    if (idtarefaEditada.text()) {
+
+        console.log(idtarefaEditada)
         console.log('id = ""');
-        linhaSelecionada.remove();
+        localStorage.removeItem(`tarefa${idtarefaEditada.text()}`); //Removendo tarefa do localStorage
+        linhaSelecionada.remove(); //Removendo tarefa da lista no front
+        console.log(linhaSelecionada)
         $('#cancelarEdit').remove();
     };
     $('tbody').append(`<tr>
+                            <td name="id" hidden>${id}</td>
                             <td name="data">${data.val()}</td>
                             <td name="hora">${hora.val()}</td>
                             <td name="tarefa">${tarefa.val()}</td>
                             <td>${statusTarefa}</td>
                             <td>${buttonEditar}</td>
-                            <td hidden>${id}</td>
                             </tr>`);
 
-    tarefas.push({
-        id: id,
-        data: data,
-        hora: hora,
-        descTarefa: tarefa,
-        status: statusTarefa
-    });
+    objTarefas.id = id
+    objTarefas.data = data.val()
+    objTarefas.hora = hora.val()
+    objTarefas.descTarefa = tarefa.val()
+    objTarefas.status = statusTarefa
 
-    localStorage.setItem(`tarefa${id}`, tarefas);
-    id = id++
-    tarefas = [];
+    localStorage.setItem(`tarefa${id}`, JSON.stringify(objTarefas));
+    id++
+    objTarefas = {};
     // Limpar campos
     data.val("");
     hora.val("");
     tarefa.val("");
+    idtarefaEditada.text("");
 });
+
 //button editar
 var linhaSelecionada;
 $('tbody').on('click', '.editar', function () {
@@ -86,8 +98,28 @@ $('tbody').on('click', '.editar', function () {
     data.val(dataLinha);
     hora.val(horaLinha);
     tarefa.val(tarefaLinha);
-    $('#idTarefaEditada').text(idLinha)
-    $('.buttonsSalvaCancelar').append(buttonCancelar)
-    console.log($('#idTarefaEditada').prop('innerText'))
-    
+    idtarefaEditada.text(idLinha)
+    $('.buttonsSalvaCancelar').append(buttonCancelar);
+    console.log(idtarefaEditada.prop('innerText'));
+
 });
+
+//Button checkbox
+$('tbody').on('click', '.status', function () {
+    console.log('clicou')
+    let id = $(this).closest('tr').find('[name="id"]').text();
+    console.log(id)
+    let tarefaLocalStrg = JSON.parse(localStorage.getItem(`tarefa${id}`));
+    console.log(tarefaLocalStrg)
+    if (tarefaLocalStrg.status.includes('checked')) {
+        tarefaLocalStrg.status = `<div class="form-check form-switch">
+                                    <input class="form-check-input status" type="checkbox">
+                                 </div>`;
+    } else {
+        tarefaLocalStrg.status = `<div class="form-check form-switch">
+                                    <input class="form-check-input status" type="checkbox" checked>
+                                </div>`;
+    }
+    localStorage.setItem(`tarefa${id}`, JSON.stringify(tarefaLocalStrg));
+});
+//var req = new XMLHttpRequest();
